@@ -1,0 +1,158 @@
+<!DOCTYPE html>
+<html lang="az">
+<head>
+<meta charset="UTF-8">
+<title>VAZ 2106 Oyunu</title>
+<style>
+body{
+    margin:0;
+    overflow:hidden;
+    background:#222;
+}
+canvas{
+    display:block;
+    background:#555;
+}
+#info{
+    position:absolute;
+    top:10px;
+    left:10px;
+    color:white;
+    font-size:22px;
+    font-family:Arial;
+}
+</style>
+</head>
+<body>
+
+<div id="info">
+Pul: <span id="money">0</span><br>
+Sürət: <span id="speed">0</span> km/s
+</div>
+
+<canvas id="game"></canvas>
+
+<script>
+const canvas = document.getElementById("game");
+const ctx = canvas.getContext("2d");
+
+canvas.width = window.innerWidth;
+canvas.height = window.innerHeight;
+
+const car = {
+    x: canvas.width/2,
+    y: canvas.height/2,
+    w: 40,
+    h: 70,
+    speed: 0,
+    angle: 0
+};
+
+let money = 0;
+let keys = {};
+
+const coins = [];
+
+for(let i=0;i<30;i++){
+    coins.push({
+        x:Math.random()*canvas.width,
+        y:Math.random()*canvas.height
+    });
+}
+
+document.addEventListener("keydown",e=>keys[e.key]=true);
+document.addEventListener("keyup",e=>keys[e.key]=false);
+
+function update(){
+
+    if(keys["ArrowUp"] || keys["w"])
+        car.speed += 0.1;
+
+    if(keys["ArrowDown"] || keys["s"])
+        car.speed -= 0.1;
+
+    if(keys["ArrowLeft"] || keys["a"])
+        car.angle -= 0.05;
+
+    if(keys["ArrowRight"] || keys["d"])
+        car.angle += 0.05;
+
+    car.speed *= 0.98;
+
+    car.x += Math.sin(car.angle)*car.speed;
+    car.y -= Math.cos(car.angle)*car.speed;
+
+    coins.forEach((c,index)=>{
+        let dist = Math.hypot(car.x-c.x,car.y-c.y);
+
+        if(dist<30){
+            money += 100;
+            coins.splice(index,1);
+        }
+    });
+
+    document.getElementById("money").innerText = money;
+    document.getElementById("speed").innerText =
+        Math.abs(car.speed*20).toFixed(0);
+}
+
+function drawCar(){
+    ctx.save();
+
+    ctx.translate(car.x,car.y);
+    ctx.rotate(car.angle);
+
+    /* kuzov */
+    ctx.fillStyle="#e6e6e6";
+    ctx.fillRect(-20,-35,40,70);
+
+    /* şüşələr */
+    ctx.fillStyle="#87CEEB";
+    ctx.fillRect(-15,-25,30,20);
+    ctx.fillRect(-15,5,30,20);
+
+    /* faralar */
+    ctx.fillStyle="yellow";
+    ctx.fillRect(-15,-38,8,6);
+    ctx.fillRect(7,-38,8,6);
+
+    ctx.restore();
+}
+
+function draw(){
+
+    ctx.clearRect(0,0,canvas.width,canvas.height);
+
+    /* yol xətləri */
+    ctx.strokeStyle="white";
+    ctx.lineWidth=4;
+
+    for(let y=0;y<canvas.height;y+=50){
+        ctx.beginPath();
+        ctx.moveTo(canvas.width/2,y);
+        ctx.lineTo(canvas.width/2,y+25);
+        ctx.stroke();
+    }
+
+    /* pullar */
+    coins.forEach(c=>{
+        ctx.beginPath();
+        ctx.fillStyle="gold";
+        ctx.arc(c.x,c.y,10,0,Math.PI*2);
+        ctx.fill();
+    });
+
+    drawCar();
+}
+
+function gameLoop(){
+    update();
+    draw();
+    requestAnimationFrame(gameLoop);
+}
+
+gameLoop();
+</script>
+
+</body>
+</html>
